@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.5] - 2025-12-31
+
+### Added
+- `AnthropicSupervisor` implementation using the official Anthropic Node.js SDK (`src/supervisors/AnthropicSupervisor.ts`).
+- Added `@anthropic-ai/sdk` package dependency.
+
 ## [1.0.4] - 2025-12-31
 
 ### Added
