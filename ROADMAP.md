@@ -6,9 +6,9 @@
 - [x] Implement Council Manager (`src/council.ts`)
 - [x] Implement Base Supervisor Class (`src/supervisors/BaseSupervisor.ts`)
 
-## Phase 2: Supervisor Integration (Next)
+## Phase 2: Supervisor Integration (In Progress)
 - [x] Mock Supervisor (for testing)
-- [ ] OpenAI Supervisor Implementation
+- [x] OpenAI Supervisor Implementation (`src/supervisors/OpenAISupervisor.ts`)
 - [ ] Anthropic Supervisor Implementation
 - [ ] Google Supervisor Implementation
 - [ ] DeepSeek Supervisor Implementation

@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.4] - 2025-12-31
+
+### Added
+- `OpenAISupervisor` implementation using the official OpenAI Node.js SDK (`src/supervisors/OpenAISupervisor.ts`).
+- Added `openai` package dependency.
+- Added `openai-node` as a git submodule in `src/submodules/openai-node` for reference.
+
 ## [1.0.3] - 2025-12-31
 
 ### Added
