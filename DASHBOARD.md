@@ -12,6 +12,7 @@ The project follows a standard TypeScript/Node.js structure.
     - `MockSupervisor.ts`: Mock implementation for testing.
     - `OpenAISupervisor.ts`: Implementation for OpenAI models.
     - `AnthropicSupervisor.ts`: Implementation for Anthropic (Claude) models.
+    - `GoogleSupervisor.ts`: Implementation for Google (Gemini) models.
   - **`submodules/`**: Contains git submodules for reference and potential vendoring.
 
 ## Submodules
@@ -25,9 +26,9 @@ The project follows a standard TypeScript/Node.js structure.
 | **Mock** | ✅ Active | `MockSupervisor` |
 | **OpenAI** | ✅ Active | `OpenAISupervisor` |
 | **Anthropic** | ✅ Active | `AnthropicSupervisor` |
-| **Google** | ⏳ Pending | - |
+| **Google** | ✅ Active | `GoogleSupervisor` |
 | **DeepSeek** | ⏳ Pending | - |
 
 ## Latest Build
-- **Version**: 1.0.5
+- **Version**: 1.0.6
 - **Date**: 2025-12-31
