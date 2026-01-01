@@ -17,42 +17,57 @@ export class GoogleSupervisor extends BaseSupervisor {
 
   public async chat(messages: Message[]): Promise<string> {
     try {
-      const systemMessage = messages.find(m => m.role === 'system');
+      // 1. Extract the last message to use as the prompt
+      const lastMsg = messages[messages.length - 1];
+      if (!lastMsg) return "No messages provided.";
+
+      // 2. Extract system instruction (if any, excluding the last message if it's system)
+      // In Council, the last message IS the system prompt/instruction for the round.
+      // We should treat the last message as the USER prompt for Gemini, 
+      // and any previous system messages as system instructions.
+      
+      const previousMessages = messages.slice(0, -1);
+      const systemInstructionMsg = previousMessages.find(m => m.role === 'system');
       
       const modelParams: ModelParams = { 
         model: this.config.modelName || 'gemini-1.5-pro'
       };
 
-      if (systemMessage && systemMessage.content) {
-        modelParams.systemInstruction = systemMessage.content;
+      if (systemInstructionMsg) {
+        modelParams.systemInstruction = systemInstructionMsg.content;
       }
 
       const model = this.client.getGenerativeModel(modelParams);
 
-      // Gemini's chat history format differs from OpenAI's.
-      // We need to convert standard Message[] to Gemini's Content[] format.
-      
-      const chatHistory = messages
+      // 3. Build History
+      // Filter out system messages from history
+      let history = previousMessages
         .filter(m => m.role !== 'system')
         .map(m => ({
           role: m.role === 'assistant' ? 'model' : 'user',
           parts: [{ text: m.content } as Part],
         }));
 
-      // If we need to start a chat session with history
+      // Gemini Requirement: History must start with 'user'.
+      // If history is not empty and starts with 'model', prepend a dummy user message.
+      const firstMsg = history[0];
+      if (firstMsg && firstMsg.role === 'model') {
+        history = [
+          { role: 'user', parts: [{ text: 'Discussion started.' }] },
+          ...history
+        ];
+      }
+
+      // 4. Start Chat
       const chatSession = model.startChat({
-        history: chatHistory.slice(0, -1), // All but the last message
+        history: history,
         generationConfig: {
             temperature: this.config.temperature || 0.7,
         }
       });
 
-      const lastMessage = chatHistory[chatHistory.length - 1];
-      if (!lastMessage) {
-          return "No user message found to respond to.";
-      }
-
-      const result = await chatSession.sendMessage(lastMessage.parts[0]?.text || "");
+      // 5. Send the last message (converted to text)
+      const result = await chatSession.sendMessage(lastMsg.content);
       const response = result.response;
       return response.text();
 

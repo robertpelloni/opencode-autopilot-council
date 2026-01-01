@@ -1,94 +1,77 @@
-# OpenCode Autopilot Council Plugin
+# OpenCode Council Orchestrator
 
-A sophisticated multi-agent system that orchestrates a "council" of AI supervisors to provide comprehensive code review and development guidance.
+A web-based orchestration platform for managing local OpenCode sessions, integrated with the "Council of Supervisors" for automated AI guidance.
 
-## What is it?
+> **Note:** This project is designed to be a submodule within the **AIOS** (AI Operating System) monorepo. It serves as the local interface for OpenCode sessions, complementing `jules-app` (which handles remote Google Jules sessions).
 
-This is an **OpenCode Plugin**. It adds a new tool called `consult_council` to your OpenCode environment.
-When you ask OpenCode to "consult the council" or "review this project", it triggers this tool.
+## 🎯 Purpose
 
-The tool leverages multiple Large Language Models (LLMs) acting as distinct supervisors (e.g., Architect, Reviewer, Critic). These supervisors discuss and debate the current state of your project, providing a synthesized and well-rounded guidance.
+The **Council Orchestrator** provides a centralized dashboard to:
+1.  **Manage Sessions**: View, start, stop, and monitor multiple local OpenCode repositories.
+2.  **Automate Guidance**: Run a background "Council" loop that continuously monitors active sessions and injects high-level architectural advice from multiple AI models (GPT-4, Claude, Gemini, DeepSeek).
+3.  **Visualize State**: See logs and status of your AI coding agents in real-time.
 
-## Plugin vs SDK?
+## 🏗️ Architecture
 
-You asked about the difference:
-- **Plugin** (This project): Extends OpenCode by adding tools and hooks. It runs *inside* OpenCode. Use this when you want the AI to have new capabilities.
-- **SDK**: A client library to control OpenCode from an external script or app.
+This project consists of three main components:
 
-## Installation
+1.  **Web Dashboard (`public/index.html`)**: A frontend interface to list sessions and control the orchestrator.
+2.  **Backend Server (`src/server.ts`)**: An Express.js server that:
+    - Serves the dashboard.
+    - Manages `opencode` child processes.
+    - Exposes an API for session management.
+    - Runs the "Council Loop" for active sessions.
+3.  **Council Logic (`src/council.ts`)**: The core multi-agent debate engine that synthesizes advice.
 
-### 1. Build the Plugin
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js & npm
+- OpenCode CLI installed and accessible in your PATH (or configured in `session-manager.ts`).
+- API Keys for the supervisors (OpenAI, Anthropic, Google, etc.) in a `.env` file.
+
+### Installation
+
 ```bash
 npm install
 npm run build
 ```
 
-### 2. Install into OpenCode
-To use this plugin locally, you need to reference it in your OpenCode configuration.
+### Running the Orchestrator
 
-1.  Locate your OpenCode config directory (usually `~/.config/opencode` or `.opencode` in your project).
-2.  Add this plugin to your `opencode.json` (or create a `package.json` in your `.opencode` folder and install it there, but for local development, linking is easier).
+Start the web server and the orchestration loop:
 
-**Method A: Local Link (Recommended for dev)**
-You can symlink this directory into your OpenCode plugins folder:
 ```bash
-# Linux/macOS
-ln -s /path/to/opencode-autopilot-council ~/.config/opencode/plugin/council
-
-# Windows (PowerShell)
-New-Item -ItemType Junction -Path "$HOME\.config\opencode\plugin\council" -Target "C:\path\to\opencode-autopilot-council"
+npm run server
 ```
 
-**Method B: NPM Install**
-If you publish this to npm, you can just add it to `opencode.json`:
-```json
-{
-  "plugins": ["opencode-autopilot-council"]
-}
+Then open your browser to `http://localhost:3000`.
+
+### Legacy Headless Mode
+
+If you only want to run the council loop for a single active session without the web UI:
+
+```bash
+npm run controller
 ```
 
-## Configuration
+## 📂 Project Structure
 
-The council needs API keys to function. Set these in your OpenCode environment or `.env` file.
+- **`src/server.ts`**: Entry point for the Web Orchestrator.
+- **`src/session-manager.ts`**: Handles spawning OpenCode processes and managing SDK connections.
+- **`src/controller.ts`**: Standalone script for headless operation.
+- **`src/council.ts`**: The multi-agent consensus engine.
+- **`src/supervisors/`**: AI Model implementations (OpenAI, Anthropic, Google, DeepSeek).
+- **`public/`**: Static frontend assets.
 
-```env
-OPENAI_API_KEY=your_key
-ANTHROPIC_API_KEY=your_key
-GOOGLE_API_KEY=your_key
-DEEPSEEK_API_KEY=your_key
-```
+## 🔄 Migration to AIOS
 
-## Usage
+This repository is being migrated to `workspace/aios/opencode-autopilot-council`.
+If you are moving this folder, ensure you:
+1.  Copy all files including `.env` (if present).
+2.  Run `npm install` in the new location.
+3.  Update any relative paths if this project relies on other `aios` modules (currently it is standalone).
 
-### Option 1: As a Plugin (Inside OpenCode)
+## 🤝 Contributing
 
-Once installed, simply ask OpenCode:
-
-> "Consult the council about the current state of the auth module."
-
-The plugin will gather context and return a synthesized guidance report directly in the chat.
-
-### Option 2: As an External Controller (SDK)
-
-You can also run the council as a standalone process that "watches" your OpenCode session and injects advice.
-
-1.  Ensure OpenCode is running.
-2.  Run the controller:
-    ```bash
-    npm run controller
-    ```
-3.  The script will:
-    - Connect to your running OpenCode instance.
-    - Find the active session.
-    - Analyze the recent chat history to understand your goal.
-    - Run the Council deliberation.
-    - **Post the advice back into your OpenCode chat automatically.**
-
-## Project Structure
-
-- `src/index.ts`: The Plugin entry point. Defines the `consult_council` tool.
-- `src/controller.ts`: The SDK Controller script for external automation.
-- `src/council.ts`: Core logic for the council and debate rounds.
-- `src/supervisors/`: Implementations of different AI supervisors.
-- `src/demo.ts`: A standalone script to test the council logic without OpenCode (run via `npm start`).
-
+This project is part of the AIOS ecosystem.

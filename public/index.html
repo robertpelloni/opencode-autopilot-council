@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenCode Council Orchestrator</title>
+    <style>
+        :root {
+            --bg-color: #1e1e1e;
+            --sidebar-bg: #252526;
+            --text-color: #cccccc;
+            --accent-color: #007acc;
+            --border-color: #3e3e42;
+            --success-color: #4ec9b0;
+            --error-color: #f48771;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        #sidebar {
+            width: 300px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+        #main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .header {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .session-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+        .session-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .session-item:hover {
+            background-color: #2a2d2e;
+        }
+        .session-item.active {
+            background-color: #37373d;
+            border-left: 3px solid var(--accent-color);
+        }
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .status-running { background-color: var(--success-color); }
+        .status-stopped { background-color: #666; }
+        .status-error { background-color: var(--error-color); }
+        
+        button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 2px;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        input[type="text"] {
+            background-color: #3c3c3c;
+            border: 1px solid var(--border-color);
+            color: white;
+            padding: 8px;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+        .log-container {
+            background-color: #1e1e1e;
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            white-space: pre-wrap;
+            overflow-y: auto;
+            flex: 1;
+            margin-top: 10px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: var(--sidebar-bg);
+            padding: 20px;
+            border-radius: 5px;
+            width: 400px;
+        }
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="sidebar">
+        <div class="header">
+            <span>Sessions</span>
+            <button onclick="showAddModal()">+</button>
+        </div>
+        <div class="session-list" id="sessionList">
+            <!-- Sessions will be populated here -->
+        </div>
+    </div>
+    <div id="main">
+        <div id="emptyState">Select a session to view details</div>
+        <div id="sessionDetails" style="display: none; height: 100%; flex-direction: column;">
+            <div class="header">
+                <span id="currentSessionTitle">Session Title</span>
+                <div class="actions">
+                    <button onclick="toggleSession()" id="toggleBtn">Start</button>
+                    <button onclick="deleteSession()" style="background-color: var(--error-color)">Remove</button>
+                </div>
+            </div>
+            <div style="padding: 10px 0;">
+                <strong>Path:</strong> <span id="currentSessionPath"></span><br>
+                <strong>Port:</strong> <span id="currentSessionPort"></span><br>
+                <strong>Status:</strong> <span id="currentSessionStatus"></span>
+            </div>
+            <h3>Council Logs</h3>
+            <div class="log-container" id="logs"></div>
+        </div>
+    </div>
+
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <h3>Add New Session</h3>
+            <input type="text" id="repoPath" placeholder="Absolute path to repository">
+            <div class="actions">
+                <button onclick="addSession()">Add</button>
+                <button onclick="hideAddModal()" style="background-color: #666">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let sessions = [];
+        let activeSessionId = null;
+
+        async function fetchSessions() {
+            const res = await fetch('/api/sessions');
+            sessions = await res.json();
+            renderSidebar();
+            if (activeSessionId) {
+                updateDetails(activeSessionId);
+            }
+        }
+
+        function renderSidebar() {
+            const list = document.getElementById('sessionList');
+            list.innerHTML = '';
+            sessions.forEach(s => {
+                const div = document.createElement('div');
+                div.className = `session-item ${s.id === activeSessionId ? 'active' : ''}`;
+                div.onclick = () => selectSession(s.id);
+                div.innerHTML = `
+                    <span>${s.path.split(/[\\/]/).pop()}</span>
+                    <span class="status-indicator status-${s.status}"></span>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function selectSession(id) {
+            activeSessionId = id;
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('sessionDetails').style.display = 'flex';
+            renderSidebar();
+            updateDetails(id);
+        }
+
+        function updateDetails(id) {
+            const session = sessions.find(s => s.id === id);
+            if (!session) return;
+
+            document.getElementById('currentSessionTitle').innerText = session.path.split(/[\\/]/).pop();
+            document.getElementById('currentSessionPath').innerText = session.path;
+            document.getElementById('currentSessionPort').innerText = session.port || 'N/A';
+            document.getElementById('currentSessionStatus').innerText = session.status;
+            
+            const toggleBtn = document.getElementById('toggleBtn');
+            toggleBtn.innerText = session.status === 'running' ? 'Stop' : 'Start';
+            toggleBtn.style.backgroundColor = session.status === 'running' ? '#f48771' : '#4ec9b0';
+
+            // Fetch logs
+            fetchLogs(id);
+        }
+
+        async function fetchLogs(id) {
+            const res = await fetch(\`/api/sessions/\${id}/logs\`);
+            const logs = await res.json();
+            const logContainer = document.getElementById('logs');
+            logContainer.innerText = logs.join('\\n');
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        async function toggleSession() {
+            if (!activeSessionId) return;
+            const session = sessions.find(s => s.id === activeSessionId);
+            const action = session.status === 'running' ? 'stop' : 'start';
+            
+            await fetch(\`/api/sessions/\${activeSessionId}/\${action}\`, { method: 'POST' });
+            fetchSessions();
+        }
+
+        async function addSession() {
+            const path = document.getElementById('repoPath').value;
+            if (!path) return;
+            
+            await fetch('/api/sessions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ path })
+            });
+            
+            hideAddModal();
+            fetchSessions();
+        }
+
+        async function deleteSession() {
+            if (!activeSessionId) return;
+            if(!confirm('Are you sure?')) return;
+            
+            await fetch(\`/api/sessions/\${activeSessionId}\`, { method: 'DELETE' });
+            activeSessionId = null;
+            document.getElementById('sessionDetails').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'block';
+            fetchSessions();
+        }
+
+        function showAddModal() { document.getElementById('addModal').style.display = 'flex'; }
+        function hideAddModal() { document.getElementById('addModal').style.display = 'none'; }
+
+        // Poll for updates
+        setInterval(fetchSessions, 2000);
+        fetchSessions();
+    </script>
+</body>
+</html>
