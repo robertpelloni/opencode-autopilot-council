@@ -70,9 +70,33 @@ export class SessionManager {
         }
     }
 
+    private async checkPortAvailable(port: number): Promise<boolean> {
+        return new Promise((resolve) => {
+            const server = require('net').createServer();
+            server.once('error', (err: any) => {
+                if (err.code === 'EADDRINUSE') {
+                    resolve(false);
+                } else {
+                    resolve(false); // Other error, assume unsafe
+                }
+            });
+            server.once('listening', () => {
+                server.close();
+                resolve(true);
+            });
+            server.listen(port);
+        });
+    }
+
     public async addSession(repoPath: string) {
         const id = Math.random().toString(36).substring(7);
-        const port = this.nextPort++;
+        
+        // Find next available port
+        let port = this.nextPort;
+        while (!(await this.checkPortAvailable(port))) {
+            port++;
+        }
+        this.nextPort = port + 1; // Update global counter for next time
         
         // Attempt to get git info, but don't fail if not a git repo
         const gitInfo = await this.getGitInfo(repoPath);
@@ -133,7 +157,7 @@ export class SessionManager {
             // If the user is running this from a dev environment where opencode is not installed globally,
             // we might need to adjust this.
             
-            const child = spawn(cmd, [session.path, '--port', session.port.toString()], {
+            const child = spawn(cmd, ['start', session.path, '--port', session.port.toString()], {
                 env: { ...process.env, PORT: session.port.toString() },
                 shell: true
             });
@@ -185,9 +209,39 @@ export class SessionManager {
 
         if (session.process) {
             this.log(id, "Stopping OpenCode...");
-            session.process.kill();
+            
+            // Create a promise that resolves when the process closes
+            const closePromise = new Promise<void>((resolve) => {
+                if (!session.process) { resolve(); return; }
+                
+                const timeout = setTimeout(() => {
+                    this.log(id, "Process kill timed out, forcing...");
+                    resolve();
+                }, 5000);
+
+                session.process.on('close', () => {
+                    clearTimeout(timeout);
+                    resolve();
+                });
+            });
+
+            // Kill the process
+            if (process.platform === 'win32') {
+                try {
+                    // Use taskkill to kill the process tree (/T) forcefully (/F)
+                    exec(`taskkill /pid ${session.process.pid} /T /F`);
+                } catch (e) {
+                    // Fallback or ignore if already dead
+                    session.process.kill();
+                }
+            } else {
+                session.process.kill();
+            }
+
+            await closePromise;
             session.process = null;
         }
+        
         session.status = 'stopped';
         session.client = null;
     }

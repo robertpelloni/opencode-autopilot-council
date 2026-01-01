@@ -683,6 +683,13 @@
                            <span class="info-label">Port: ${session.port || '---'}</span>
                         </div>
                     </div>
+                    
+                    <!-- Logs (Visible when Active) -->
+                     ${isActive ? `
+                     <div class="logs-area" style="border-top: 1px solid var(--card-border); padding: 0.5rem; background: #000; color: #666; font-size: 0.65rem; height: 100px; overflow-y: auto;">
+                        ${session.logs && session.logs.length ? session.logs.slice(-10).join('<br>') : 'Waiting for logs...'}
+                     </div>
+                     ` : ''}
                 </div>
                 `;
             }).join('');
