@@ -13,6 +13,7 @@ The project follows a standard TypeScript/Node.js structure.
     - `OpenAISupervisor.ts`: Implementation for OpenAI models.
     - `AnthropicSupervisor.ts`: Implementation for Anthropic (Claude) models.
     - `GoogleSupervisor.ts`: Implementation for Google (Gemini) models.
+    - `DeepSeekSupervisor.ts`: Implementation for DeepSeek models.
   - **`submodules/`**: Contains git submodules for reference and potential vendoring.
 
 ## Submodules
@@ -27,8 +28,8 @@ The project follows a standard TypeScript/Node.js structure.
 | **OpenAI** | ✅ Active | `OpenAISupervisor` |
 | **Anthropic** | ✅ Active | `AnthropicSupervisor` |
 | **Google** | ✅ Active | `GoogleSupervisor` |
-| **DeepSeek** | ⏳ Pending | - |
+| **DeepSeek** | ✅ Active | `DeepSeekSupervisor` |
 
 ## Latest Build
-- **Version**: 1.0.6
+- **Version**: 1.0.7
 - **Date**: 2025-12-31
