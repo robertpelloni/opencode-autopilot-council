@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.7] - 2025-12-31
+
+### Added
+- `DeepSeekSupervisor` implementation using the OpenAI-compatible SDK (`src/supervisors/DeepSeekSupervisor.ts`).
+- Standardized LLM instructions in `LLM_INSTRUCTIONS.md`, `CLAUDE.md`, `GPT.md`, and `GEMINI.md`.
+- Updated `src/index.ts` to support configuration of all implemented supervisors (OpenAI, Anthropic, Google, DeepSeek).
+
+### Changed
+- Refactored `src/index.ts` to dynamically register supervisors based on configuration.
+
 ## [1.0.6] - 2025-12-31
 
 ### Added

@@ -11,7 +11,7 @@
 - [x] OpenAI Supervisor Implementation (`src/supervisors/OpenAISupervisor.ts`)
 - [x] Anthropic Supervisor Implementation (`src/supervisors/AnthropicSupervisor.ts`)
 - [x] Google Supervisor Implementation (`src/supervisors/GoogleSupervisor.ts`)
-- [ ] DeepSeek Supervisor Implementation
+- [x] DeepSeek Supervisor Implementation (`src/supervisors/DeepSeekSupervisor.ts`)
 - [ ] Other Providers (Grok, Moonshot, Qwen)
 
 ## Phase 3: Workflow & Orchestration
